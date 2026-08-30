@@ -19,7 +19,10 @@ defined('ABSPATH') || exit;
 function ucpwc_fs()
 {
     global $ucpwc_fs;
-    if (!isset($ucpwc_fs) && defined('UCPWC_FS_ID') && defined('UCPWC_FS_PUBLIC_KEY')) {
+    // The SDK directory ships only in the premium build (distributed by Freemius);
+    // the wordpress.org free build omits it, so guard for absence.
+    if (!isset($ucpwc_fs) && defined('UCPWC_FS_ID') && defined('UCPWC_FS_PUBLIC_KEY')
+        && file_exists(UCPWC_PATH . 'freemius/start.php')) {
         require_once UCPWC_PATH . 'freemius/start.php';
         $ucpwc_fs = fs_dynamic_init([
             'id'             => UCPWC_FS_ID,
