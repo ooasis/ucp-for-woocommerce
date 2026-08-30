@@ -1,7 +1,3 @@
 tests
 README.md
 .distignore
-freemius/gulpfile.js
-freemius/gulptasks
-freemius/composer.json
-freemius/composer.lock
