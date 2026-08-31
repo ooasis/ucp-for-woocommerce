@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: UCP/ACP Agent for WooCommerce
- * Plugin URI: https://wordpress.org/plugins/ucpacp-agent-for-woocommerce/
+ * Plugin URI: https://wordpress.org/plugins/ucp-acp-agent-for-woocommerce/
  * Description: Universal Commerce Protocol (UCP) merchant implementation for WooCommerce — discovery, signed checkout sessions, orders, webhooks.
  * Version: 0.1.0
  * Author: ooasis
@@ -11,7 +11,7 @@
  * Requires Plugins: woocommerce
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: ucpacp-agent-for-woocommerce
+ * Text Domain: ucp-acp-agent-for-woocommerce
  */
 
 defined('ABSPATH') || exit;

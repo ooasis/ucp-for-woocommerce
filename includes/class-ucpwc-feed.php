@@ -220,7 +220,7 @@ class UCPWC_Feed
         $feed_id = get_option('ucpwc_feed_id', '');
         $token = get_option('ucpwc_feed_api_token', '');
         if (!$base || !$feed_id || !$token) {
-            return __('Feed push is not configured (API base, feed id, and token are required).', 'ucpacp-agent-for-woocommerce');
+            return __('Feed push is not configured (API base, feed id, and token are required).', 'ucp-acp-agent-for-woocommerce');
         }
         $products = self::products();
         $pushed = 0;
@@ -240,13 +240,13 @@ class UCPWC_Feed
             if ($code !== 200) {
                 $detail = is_wp_error($res) ? $res->get_error_message() : wp_remote_retrieve_body($res);
                 /* translators: 1: number of products pushed, 2: error detail */
-                return sprintf(__('Push failed after %1$d products: %2$s', 'ucpacp-agent-for-woocommerce'), $pushed, $detail);
+                return sprintf(__('Push failed after %1$d products: %2$s', 'ucp-acp-agent-for-woocommerce'), $pushed, $detail);
             }
             $pushed += count($chunk);
         }
         update_option('ucpwc_feed_last_push', gmdate('c'), false);
         /* translators: %d: number of products pushed */
-        return sprintf(__('Pushed %d products to the feed API.', 'ucpacp-agent-for-woocommerce'), $pushed);
+        return sprintf(__('Pushed %d products to the feed API.', 'ucp-acp-agent-for-woocommerce'), $pushed);
     }
 
     /** Daily scheduled push, active only while push is configured. */

@@ -26,7 +26,7 @@ function ucpwc_fs()
         require_once UCPWC_PATH . 'freemius/start.php';
         $ucpwc_fs = fs_dynamic_init([
             'id'             => UCPWC_FS_ID,
-            'slug'           => 'ucpacp-agent-for-woocommerce',
+            'slug'           => 'ucp-acp-agent-for-woocommerce',
             'type'           => 'plugin',
             'public_key'     => UCPWC_FS_PUBLIC_KEY,
             'is_premium'     => false,   // free version baseline; premium builds flip this at deploy
