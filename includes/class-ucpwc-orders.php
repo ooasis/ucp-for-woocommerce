@@ -130,24 +130,17 @@ class UCPWC_Orders
     public static function simulate_shipping(string $order_uuid): void
     {
         $secret = get_option('ucpwc_simulation_secret');
-        header('Content-Type: application/json');
         if (!$secret) {
-            http_response_code(500);
-            echo wp_json_encode(['error' => 'simulation secret not configured']);
-            return;
+            wp_send_json(['error' => 'simulation secret not configured'], 500);
         }
         $provided = sanitize_text_field(wp_unslash($_SERVER['HTTP_SIMULATION_SECRET'] ?? ''));
         if (!hash_equals((string)$secret, $provided)) {
-            http_response_code(403);
-            echo wp_json_encode(['error' => 'forbidden']);
-            return;
+            wp_send_json(['error' => 'forbidden'], 403);
         }
         try {
             $entity = self::load($order_uuid);
         } catch (UCPWC_Error) {
-            http_response_code(404);
-            echo wp_json_encode(['error' => 'order not found']);
-            return;
+            wp_send_json(['error' => 'order not found'], 404);
         }
         $entity['fulfillment']['events'][] = [
             'id'          => 'evt_' . wp_generate_uuid4(),
@@ -169,7 +162,7 @@ class UCPWC_Orders
         }
         self::send_webhook($entity, $webhook_url, 'order_shipped');
         UCPWC_Acp::send_order_webhook($order_uuid, 'order_update');
-        echo wp_json_encode(['status' => 'shipped']);
+        wp_send_json(['status' => 'shipped']);
     }
 
     // -- webhooks -----------------------------------------------------------------

@@ -73,19 +73,14 @@ add_action('ucpwc_feed_push', ['UCPWC_Feed', 'push']);
 add_action('parse_request', function ($wp) {
     $path = strtok(sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'] ?? '')), '?');
     if ($path === '/.well-known/ucp') {
-        header('Content-Type: application/json');
         header('Cache-Control: public, max-age=300');
-        echo wp_json_encode(UCPWC_Profile::business_profile());
-        exit;
+        wp_send_json(UCPWC_Profile::business_profile());
     }
     if ($path === '/.well-known/acp.json' && ucpwc_can_premium('acp')) {
-        header('Content-Type: application/json');
         header('Cache-Control: public, max-age=300');
-        echo wp_json_encode(UCPWC_Acp::discovery());
-        exit;
+        wp_send_json(UCPWC_Acp::discovery());
     }
     if (preg_match('#^/testing/simulate-shipping/([A-Za-z0-9\-]+)$#', $path, $m)) {
         UCPWC_Orders::simulate_shipping($m[1]);
-        exit;
     }
 });
