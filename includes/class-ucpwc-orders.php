@@ -184,14 +184,14 @@ class UCPWC_Orders
         $authority = $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
         $path = $parts['path'] ?? '/';
         $ucp_agent = 'profile="' . home_url('/.well-known/ucp') . '"';
-        $digest = \UcpSpike\content_digest($body);
+        $digest = \UCPWC\Signatures\content_digest($body);
 
         $key = UCPWC_Profile::private_key();
         $kid = UCPWC_Profile::public_jwk()['kid'];
         $components = ['@method', '@authority', '@path', 'content-digest', 'content-type',
                        'ucp-agent', 'webhook-id', 'webhook-timestamp', 'x-event-type'];
         $params = ';keyid="' . $kid . '"';
-        $base = \UcpSpike\signature_base($components,
+        $base = \UCPWC\Signatures\signature_base($components,
             ['method' => 'POST', 'authority' => $authority, 'path' => $path],
             [
                 'content-digest'    => $digest,
@@ -212,7 +212,7 @@ class UCPWC_Orders
             'UCP-Agent'         => $ucp_agent,
             'Content-Digest'    => $digest,
             'Signature-Input'   => "sig1=($list)$params",
-            'Signature'         => 'sig1=:' . base64_encode(\UcpSpike\sign_base($base, $key)) . ':',
+            'Signature'         => 'sig1=:' . base64_encode(\UCPWC\Signatures\sign_base($base, $key)) . ':',
         ];
 
         for ($attempt = 0, $delay = 500000; $attempt < 3; $attempt++, $delay *= 2) {

@@ -159,7 +159,7 @@ class UCPWC_Rest
         }
         $parts = wp_parse_url(home_url($target));
         try {
-            \UcpSpike\verify_rest_request([
+            \UCPWC\Signatures\verify_rest_request([
                 'method'    => $req->get_method(),
                 'authority' => $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : ''),
                 'path'      => $parts['path'] ?? '/',
@@ -167,7 +167,7 @@ class UCPWC_Rest
                 'body'      => $req->get_body() ?: null,
                 'headers'   => $headers,
             ], $keys);
-        } catch (\UcpSpike\SignatureException $e) {
+        } catch (\UCPWC\Signatures\SignatureException $e) {
             $http = in_array($e->reason, ['digest_mismatch', 'algorithm_unsupported'], true) ? 400 : 401;
             throw new UCPWC_Error($http, $e->reason, $e->getMessage());
         }

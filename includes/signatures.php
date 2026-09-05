@@ -1,6 +1,6 @@
 <?php
 /**
- * RFC 9421 HTTP Message Signatures for UCP — spike.
+ * RFC 9421 HTTP Message Signatures for UCP.
  *
  * Plain PHP 8.1+, no dependencies beyond ext-openssl and ext-sodium.
  * Implements the UCP profile of RFC 9421 per spec/docs/specification/signatures.md:
@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- exception messages become JSON API payloads (UCP/ACP error envelopes), never HTML output.
 
-namespace UcpSpike;
+namespace UCPWC\Signatures;
 
 \defined('ABSPATH') || exit;
 

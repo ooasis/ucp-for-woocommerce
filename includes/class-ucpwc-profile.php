@@ -19,10 +19,10 @@ class UCPWC_Profile
         }
         $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
         openssl_pkey_export($key, $pem);
-        $jwk = \UcpSpike\ec_pem_to_jwk($key, '');
+        $jwk = \UCPWC\Signatures\ec_pem_to_jwk($key, '');
         // kid = RFC 7638 thumbprint (lexicographic members crv,kty,x,y)
         $thumb = ['crv' => $jwk['crv'], 'kty' => $jwk['kty'], 'x' => $jwk['x'], 'y' => $jwk['y']];
-        $jwk['kid'] = \UcpSpike\b64url_encode(hash('sha256', json_encode($thumb, JSON_UNESCAPED_SLASHES), true));
+        $jwk['kid'] = \UCPWC\Signatures\b64url_encode(hash('sha256', json_encode($thumb, JSON_UNESCAPED_SLASHES), true));
         update_option('ucpwc_signing_key', ['pem' => $pem, 'jwk' => $jwk], false);
     }
 
