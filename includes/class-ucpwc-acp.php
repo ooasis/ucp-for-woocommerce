@@ -18,19 +18,29 @@ class UCPWC_Acp
     public static function register_routes(): void
     {
         $r = fn(string $op) => fn(WP_REST_Request $req) => self::dispatch($op, $req);
+        $auth = [self::class, 'check_api_key'];
         register_rest_route('acp/v1', '/checkout_sessions', [
-            'methods' => 'POST', 'callback' => $r('create'), 'permission_callback' => '__return_true',
+            'methods' => 'POST', 'callback' => $r('create'), 'permission_callback' => $auth,
         ]);
         register_rest_route('acp/v1', '/checkout_sessions/(?P<id>[A-Za-z0-9\-]+)', [
-            ['methods' => 'GET', 'callback' => $r('get'), 'permission_callback' => '__return_true'],
-            ['methods' => 'POST', 'callback' => $r('update'), 'permission_callback' => '__return_true'],
+            ['methods' => 'GET', 'callback' => $r('get'), 'permission_callback' => $auth],
+            ['methods' => 'POST', 'callback' => $r('update'), 'permission_callback' => $auth],
         ]);
         register_rest_route('acp/v1', '/checkout_sessions/(?P<id>[A-Za-z0-9\-]+)/complete', [
-            'methods' => 'POST', 'callback' => $r('complete'), 'permission_callback' => '__return_true',
+            'methods' => 'POST', 'callback' => $r('complete'), 'permission_callback' => $auth,
         ]);
         register_rest_route('acp/v1', '/checkout_sessions/(?P<id>[A-Za-z0-9\-]+)/cancel', [
-            'methods' => 'POST', 'callback' => $r('cancel'), 'permission_callback' => '__return_true',
+            'methods' => 'POST', 'callback' => $r('cancel'), 'permission_callback' => $auth,
         ]);
+    }
+
+    /** permission_callback: every ACP request must carry the merchant's Bearer API key. */
+    public static function check_api_key(WP_REST_Request $req)
+    {
+        if (hash_equals('Bearer ' . self::api_key(), $req->get_header('authorization') ?? '')) {
+            return true;
+        }
+        return new WP_Error('invalid_api_key', 'Invalid or missing API key', ['status' => 401]);
     }
 
     /** Served at /.well-known/acp.json */
@@ -60,10 +70,6 @@ class UCPWC_Acp
     private static function dispatch(string $op, WP_REST_Request $req): WP_REST_Response
     {
         try {
-            $auth = $req->get_header('authorization') ?? '';
-            if (!hash_equals('Bearer ' . self::api_key(), $auth)) {
-                return self::error(401, 'invalid_request', 'invalid_api_key', 'Invalid or missing API key');
-            }
             $ver = $req->get_header('api-version');
             if ($ver && $ver !== self::ACP_VERSION) {
                 $res = self::error(400, 'invalid_request', 'unsupported_api_version', "API version $ver is not supported");

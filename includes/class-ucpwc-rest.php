@@ -7,6 +7,14 @@ class UCPWC_Rest
 {
     const NS = 'ucp/v1';
 
+    /**
+     * UCP endpoints are intentionally public (permission_callback => __return_true):
+     * the protocol has no merchant-issued credential. Any agent may discover and
+     * transact; request authenticity is RFC 9421 HTTP Message Signatures verified
+     * in dispatch() (mandatory when strict mode is on), and session/order IDs are
+     * unguessable UUIDv4 capabilities. Prices, stock and totals are always
+     * server-authoritative, and orders are only created after payment succeeds.
+     */
     public static function register_routes(): void
     {
         $r = fn(string $op, ?string $resource_key = null) =>
