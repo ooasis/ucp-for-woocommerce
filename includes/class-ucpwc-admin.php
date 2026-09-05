@@ -34,8 +34,6 @@ class UCPWC_Admin
                 if (isset($_POST['ucpwc_stripe_secret_key'])) {
                     delete_option('ucpwc_stripe_account_id'); // re-derive from the (possibly new) key
                 }
-                update_option('ucpwc_feed_eligible_search', isset($_POST['feed_eligible_search']) ? 'yes' : 'no');
-                update_option('ucpwc_feed_eligible_checkout', isset($_POST['feed_eligible_checkout']) ? 'yes' : 'no');
                 foreach (['ucpwc_simulation_secret', 'ucpwc_acp_webhook_url', 'ucpwc_acp_webhook_secret',
                           'ucpwc_stripe_secret_key', 'ucpwc_stripe_publishable_key',
                           'ucpwc_feed_api_base', 'ucpwc_feed_id', 'ucpwc_feed_api_token'] as $opt) {
@@ -155,17 +153,8 @@ class UCPWC_Admin
                 <th><?php esc_html_e('Feed URLs', 'ucp-acp-agent-for-woocommerce'); ?></th>
                 <td>
                     <?php $t = UCPWC_Feed::read_token(); ?>
-                    <p><code><?php echo esc_html(rest_url('acp/v1/feed/openai.tsv') . '?token=' . $t); ?></code><br>
-                       <span class="description"><?php esc_html_e('OpenAI ChatGPT merchant feed (TSV).', 'ucp-acp-agent-for-woocommerce'); ?></span></p>
                     <p><code><?php echo esc_html(rest_url('acp/v1/feed/products.jsonl') . '?token=' . $t); ?></code><br>
                        <span class="description"><?php esc_html_e('ACP standard feed snapshot (JSON Lines).', 'ucp-acp-agent-for-woocommerce'); ?></span></p>
-                </td>
-            </tr>
-            <tr>
-                <th><?php esc_html_e('Eligibility defaults', 'ucp-acp-agent-for-woocommerce'); ?></th>
-                <td>
-                    <label><input type="checkbox" name="feed_eligible_search" <?php checked(get_option('ucpwc_feed_eligible_search', 'yes'), 'yes'); ?>> <?php esc_html_e('is_eligible_search (ChatGPT search visibility)', 'ucp-acp-agent-for-woocommerce'); ?></label><br>
-                    <label><input type="checkbox" name="feed_eligible_checkout" <?php checked(get_option('ucpwc_feed_eligible_checkout', 'yes'), 'yes'); ?>> <?php esc_html_e('is_eligible_checkout (direct purchase in ChatGPT; requires OpenAI approval)', 'ucp-acp-agent-for-woocommerce'); ?></label>
                 </td>
             </tr>
             <tr>

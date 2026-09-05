@@ -4,13 +4,9 @@ defined('ABSPATH') || exit;
 // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- exception messages become JSON API payloads, never HTML output.
 
 /**
- * Product feed generation, two serializations from one catalog mapper:
- *
- *  - ACP standard feed (spec 2026-04-17): nested Product/Variant JSON —
- *    served as a JSONL snapshot and pushed incrementally to an agent-hosted
- *    Feed API (PATCH /feeds/{id}/products).
- *  - OpenAI ChatGPT merchant feed: flat TSV with eligibility flags
- *    (is_eligible_search / is_eligible_checkout), served for OpenAI to ingest.
+ * Product feed generation — the ACP standard feed (spec 2026-04-17): nested
+ * Product/Variant JSON, served as a JSONL snapshot and pushed incrementally to
+ * an agent-hosted Feed API (PATCH /feeds/{id}/products).
  *
  * Feed endpoints accept the ACP Bearer key or a dedicated read token
  * (?token=...) so fetchers that can't set headers can still pull the file.
@@ -113,63 +109,6 @@ class UCPWC_Feed
 
     // -- serializations --------------------------------------------------------------
 
-    public static function to_jsonl(): string
-    {
-        return implode("\n", array_map('wp_json_encode', self::products())) . "\n";
-    }
-
-    /** OpenAI ChatGPT merchant feed: flat TSV, one row per variant. */
-    public static function to_openai_tsv(): string
-    {
-        $cols = ['id', 'title', 'description', 'link', 'image_link', 'brand', 'availability', 'price',
-                 'sale_price', 'gtin', 'item_group_id', 'condition', 'is_eligible_search', 'is_eligible_checkout'];
-        $search = get_option('ucpwc_feed_eligible_search', 'yes') === 'yes' ? 'true' : 'false';
-        $checkout = get_option('ucpwc_feed_eligible_checkout', 'yes') === 'yes' ? 'true' : 'false';
-        $clean = fn(string $s, int $max) => mb_substr(preg_replace('/[\t\r\n]+/', ' ', $s), 0, $max);
-        $money = fn(array $price) => number_format($price['amount'] / 100, 2, '.', '') . ' ' . $price['currency'];
-
-        $rows = [implode("\t", $cols)];
-        foreach (self::products() as $product) {
-            $grouped = count($product['variants']) > 1;
-            foreach ($product['variants'] as $v) {
-                // OpenAI: price = pre-discount price, sale_price = active discount price.
-                $price = $v['list_price'] ?? $v['price'];
-                $sale = isset($v['list_price']) ? $money($v['price']) : '';
-                $brand = self::brand($product) ?: $clean(get_bloginfo('name'), 70);
-                $rows[] = implode("\t", [
-                    $clean($v['id'], 100),
-                    $clean($v['title'], 150),
-                    $clean($product['description']['plain'] ?? $product['title'], 5000),
-                    $v['url'] ?? $product['url'],
-                    $v['media'][0]['url'] ?? $product['media'][0]['url'] ?? '',
-                    $brand,
-                    ['in_stock' => 'in_stock', 'out_of_stock' => 'out_of_stock', 'backorder' => 'backorder'][$v['availability']['status']] ?? 'unknown',
-                    $money($price),
-                    $sale,
-                    $v['barcodes'][0]['value'] ?? '',
-                    $grouped ? $product['id'] : '',
-                    'new',
-                    $search,
-                    $checkout,
-                ]);
-            }
-        }
-        return implode("\n", $rows) . "\n";
-    }
-
-    private static function brand(array $product): string
-    {
-        // ponytail: WC core brands taxonomy only; per-product brand overrides when a merchant asks.
-        static $cache = [];
-        $id = $product['id'];
-        if (!isset($cache[$id])) {
-            $pid = wc_get_product_id_by_sku($id) ?: (int)str_replace('wc-', '', $id);
-            $terms = taxonomy_exists('product_brand') ? get_the_terms($pid, 'product_brand') : false;
-            $cache[$id] = $terms && !is_wp_error($terms) ? $terms[0]->name : '';
-        }
-        return $cache[$id];
-    }
-
     // -- REST endpoints ---------------------------------------------------------------
 
     public static function register_routes(): void
@@ -187,15 +126,9 @@ class UCPWC_Feed
             'methods' => 'GET', 'permission_callback' => $guard,
             'callback' => function () {
                 header('Content-Type: application/jsonl');
-                echo self::to_jsonl(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSONL feed body
-                exit;
-            },
-        ]);
-        register_rest_route('acp/v1', '/feed/openai.tsv', [
-            'methods' => 'GET', 'permission_callback' => $guard,
-            'callback' => function () {
-                header('Content-Type: text/tab-separated-values; charset=utf-8');
-                echo self::to_openai_tsv(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- TSV feed body
+                foreach (self::products() as $product) {
+                    echo wp_json_encode($product), "\n";
+                }
                 exit;
             },
         ]);
