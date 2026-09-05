@@ -137,6 +137,16 @@ class UCPWC_Rest
             }
             return;
         }
+        // Validated, not sanitized: the request target is cryptographic input (the
+        // @path/@query components of the RFC 9421 signature base), so its bytes must
+        // reach the verifier unchanged. A legitimate request target is printable
+        // ASCII starting with "/" (RFC 9112 §3.2); anything else cannot have been
+        // signed and is rejected outright.
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- validated by the allow-list regex below; sanitizing would alter the signed bytes.
+        $target = isset($_SERVER['REQUEST_URI']) ? wp_unslash($_SERVER['REQUEST_URI']) : '/';
+        if (!is_string($target) || !preg_match('#\A/[\x21-\x7E]*\z#', $target)) {
+            throw new UCPWC_Error(400, 'invalid_request_target', 'Malformed request target');
+        }
         $agent = $req->get_header('ucp-agent') ?? '';
         $profile = UCPWC_Profile::fetch_platform_profile($agent);
         $keys = $profile['ucp']['keys'] ?? $profile['signing_keys'] ?? [];
@@ -147,8 +157,7 @@ class UCPWC_Rest
         foreach ($req->get_headers() as $name => $values) {
             $headers[str_replace('_', '-', strtolower($name))] = implode(', ', $values);
         }
-        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the raw URI is required: it is cryptographic input (@path/@query components of the RFC 9421 signature base); altering it breaks verification.
-        $parts = wp_parse_url(home_url(wp_unslash($_SERVER['REQUEST_URI'] ?? '/')));
+        $parts = wp_parse_url(home_url($target));
         try {
             \UcpSpike\verify_rest_request([
                 'method'    => $req->get_method(),
