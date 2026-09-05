@@ -141,9 +141,6 @@ class UCPWC_Payments
 
     public static function stripe_secret_key(): string
     {
-        if (!ucpwc_can_premium('stripe')) {
-            return ''; // no key = Stripe handlers neither advertised nor chargeable
-        }
         $key = get_option('ucpwc_stripe_secret_key', '');
         if ($key) {
             return $key;

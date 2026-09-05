@@ -132,7 +132,7 @@ class UCPWC_Rest
     {
         $sig_input = $req->get_header('signature-input');
         if (!$sig_input || !$req->get_header('signature')) {
-            if (get_option('ucpwc_strict_signatures') === 'yes' && ucpwc_can_premium('strict_signatures')) {
+            if (get_option('ucpwc_strict_signatures') === 'yes') {
                 throw new UCPWC_Error(401, 'signature_missing', 'This merchant requires signed requests (RFC 9421)');
             }
             return;

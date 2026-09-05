@@ -25,7 +25,7 @@ Fixtures: `../wp/fixtures.php` (flower_shop dataset; `wp eval-file fixtures.php`
 
 ## Monetization rails
 
-Freemius SDK is vendored but dormant: define `UCPWC_FS_ID` + `UCPWC_FS_PUBLIC_KEY` (from a Freemius dashboard product) to activate licensing. `ucpwc_can_premium($feature)` gates the future-Pro surfaces (`acp`, `stripe`, `strict_signatures`); until paid plans exist everything is free, so the split can be decided after real customers arrive. The free tier passes the full UCP conformance suite by design.
+All features are free; there is no licensing or tracking SDK. The plugin passes the full UCP conformance suite.
 
 ## Known ceilings (ponytail-marked in source)
 

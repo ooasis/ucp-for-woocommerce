@@ -19,7 +19,6 @@ defined('ABSPATH') || exit;
 define('UCPWC_VERSION', '2026-04-08');
 define('UCPWC_PATH', plugin_dir_path(__FILE__));
 
-require_once UCPWC_PATH . 'includes/freemius.php';
 require_once UCPWC_PATH . 'includes/signatures.php';
 require_once UCPWC_PATH . 'includes/class-ucpwc-idempotency.php';
 require_once UCPWC_PATH . 'includes/class-ucpwc-payments.php';
@@ -59,12 +58,8 @@ add_action('before_woocommerce_init', function () {
 });
 
 add_action('rest_api_init', ['UCPWC_Rest', 'register_routes']);
-add_action('rest_api_init', function () {
-    if (ucpwc_can_premium('acp')) {
-        UCPWC_Acp::register_routes();
-        UCPWC_Feed::register_routes();
-    }
-});
+add_action('rest_api_init', ['UCPWC_Acp', 'register_routes']);
+add_action('rest_api_init', ['UCPWC_Feed', 'register_routes']);
 add_action('admin_menu', ['UCPWC_Admin', 'register'], 60);
 add_action('ucpwc_feed_push', ['UCPWC_Feed', 'push']);
 
@@ -76,7 +71,7 @@ add_action('parse_request', function ($wp) {
         header('Cache-Control: public, max-age=300');
         wp_send_json(UCPWC_Profile::business_profile());
     }
-    if ($path === '/.well-known/acp.json' && ucpwc_can_premium('acp')) {
+    if ($path === '/.well-known/acp.json') {
         header('Cache-Control: public, max-age=300');
         wp_send_json(UCPWC_Acp::discovery());
     }
