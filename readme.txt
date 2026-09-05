@@ -1,5 +1,5 @@
 === UCP/ACP Agent for WooCommerce ===
-Contributors: ooasis
+Contributors: sunh11373
 Tags: ucp, agentic commerce, acp, ai agents, checkout
 Requires at least: 6.5
 Tested up to: 7.1

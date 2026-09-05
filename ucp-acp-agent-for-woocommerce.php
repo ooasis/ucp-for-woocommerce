@@ -4,8 +4,8 @@
  * Plugin URI: https://wordpress.org/plugins/ucp-acp-agent-for-woocommerce/
  * Description: Universal Commerce Protocol (UCP) merchant implementation for WooCommerce — discovery, signed checkout sessions, orders, webhooks.
  * Version: 0.1.0
- * Author: ooasis
- * Author URI: https://profiles.wordpress.org/ooasis/
+ * Author: sunh11373
+ * Author URI: https://profiles.wordpress.org/sunh11373/
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Requires Plugins: woocommerce
