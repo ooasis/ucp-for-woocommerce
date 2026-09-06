@@ -69,7 +69,7 @@ class UCPWC_Rest
         } catch (UCPWC_Error $e) {
             return self::error($e);
         } catch (Throwable $e) {
-            return self::error(new UCPWC_Error(500, 'INTERNAL_ERROR', $e->getMessage()));
+            return self::error(UCPWC_Error::internal($e));
         }
     }
 

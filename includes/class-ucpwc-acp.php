@@ -107,7 +107,7 @@ class UCPWC_Acp
         } catch (UCPWC_Error $e) {
             return self::finish(self::translate_error($op, $e), $req);
         } catch (Throwable $e) {
-            return self::finish(self::error(500, 'processing_error', 'internal_error', $e->getMessage()), $req);
+            return self::finish(self::error(500, 'processing_error', 'internal_error', UCPWC_Error::internal($e)->content), $req);
         }
     }
 

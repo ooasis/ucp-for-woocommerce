@@ -11,6 +11,16 @@ class UCPWC_Error extends Exception
     {
         parent::__construct($content);
     }
+
+    /** Wrap an unexpected Throwable: log details server-side (WP_DEBUG only), return a generic 500. */
+    public static function internal(Throwable $e): self
+    {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- debug-mode diagnostics only; nothing is exposed to the caller.
+            error_log(sprintf('[ucpwc] %s: %s in %s:%d', get_class($e), $e->getMessage(), $e->getFile(), $e->getLine()));
+        }
+        return new self(500, 'INTERNAL_ERROR', 'Internal error');
+    }
 }
 
 class UCPWC_Checkout
