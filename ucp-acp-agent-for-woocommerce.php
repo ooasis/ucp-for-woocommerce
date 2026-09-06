@@ -51,6 +51,10 @@ register_activation_hook(__FILE__, function () {
     UCPWC_Profile::ensure_signing_key();
 });
 
+register_deactivation_hook(__FILE__, function () {
+    wp_clear_scheduled_hook('ucpwc_feed_push');
+});
+
 add_action('before_woocommerce_init', function () {
     if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
