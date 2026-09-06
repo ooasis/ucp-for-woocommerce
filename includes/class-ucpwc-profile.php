@@ -110,18 +110,25 @@ class UCPWC_Profile
         return ['version' => UCPWC_VERSION, 'capabilities' => $caps, 'payment_handlers' => self::payment_handlers()];
     }
 
-    /** Fetch + cache the platform profile named in the UCP-Agent header. Failure is non-fatal. */
+    /**
+     * Fetch + cache the platform profile named in the UCP-Agent header. Failure is non-fatal.
+     * The URL is attacker-controlled (any anonymous caller sets the header), so it goes through
+     * wp_safe_remote_get: http(s) only, no loopback/private/link-local hosts, standard ports.
+     */
     public static function fetch_platform_profile(string $ucp_agent): ?array
     {
         if (!preg_match('/profile="([^"]+)"/', $ucp_agent, $m)) {
             return null;
         }
-        $url = $m[1];
+        $url = esc_url_raw($m[1], ['http', 'https']);
+        if (!$url) {
+            return null;
+        }
         $cached = get_transient('ucpwc_profile_' . md5($url));
         if (is_array($cached)) {
             return $cached;
         }
-        $res = wp_remote_get($url, ['timeout' => 5]);
+        $res = wp_safe_remote_get($url, ['timeout' => 5]);
         if (is_wp_error($res) || wp_remote_retrieve_response_code($res) !== 200) {
             return null;
         }

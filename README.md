@@ -23,6 +23,11 @@ cd ../conformance && SERVER_URL=http://localhost:8080 SIMULATION_SECRET=test-sec
 
 Fixtures: `../wp/fixtures.php` (flower_shop dataset; `wp eval-file fixtures.php`).
 
+Platform-supplied URLs (profile fetch, UCP webhooks) go through `wp_safe_remote_*`, which rejects
+loopback hosts and non-standard ports. The conformance suite's mock webhook receiver runs on
+localhost, so the dev site needs `../wp/ucpwc-dev-allow-local.php` installed as an mu-plugin
+(`setup.sh` does this); never install it on a real store.
+
 ## Monetization rails
 
 All features are free; there is no licensing or tracking SDK. The plugin passes the full UCP conformance suite.

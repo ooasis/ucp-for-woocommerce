@@ -215,8 +215,9 @@ class UCPWC_Orders
             'Signature'         => 'sig1=:' . base64_encode(\UCPWC\Signatures\sign_base($base, $key)) . ':',
         ];
 
+        // $url came from the platform's profile (attacker-reachable input): safe variant only.
         for ($attempt = 0, $delay = 500000; $attempt < 3; $attempt++, $delay *= 2) {
-            $res = wp_remote_post($url, ['headers' => $headers, 'body' => $body, 'timeout' => 10]);
+            $res = wp_safe_remote_post($url, ['headers' => $headers, 'body' => $body, 'timeout' => 10]);
             if (!is_wp_error($res)) {
                 $code = wp_remote_retrieve_response_code($res);
                 if ($code < 500) {
