@@ -38,4 +38,3 @@ All features are free; there is no licensing or tracking SDK. The plugin passes 
 - Shipping: flat_rate / free_shipping / local_pickup with numeric costs; no cost formulas, no per-item free-shipping rules
 - 3DS: a Stripe intent stuck in `requires_action` is declined rather than escalated via `continue_url`; wire escalation when a platform needs server-side 3DS
 - Webhook delivery retries in-request; move to Action Scheduler for production
-- No idempotency-table purge cron yet
