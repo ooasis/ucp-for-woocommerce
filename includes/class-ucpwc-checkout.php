@@ -30,6 +30,7 @@ class UCPWC_Checkout
     public static function load(string $id): array
     {
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- plugin-owned table; no core API covers it.
         $doc = $wpdb->get_var($wpdb->prepare(
             "SELECT doc FROM {$wpdb->prefix}ucpwc_sessions WHERE id = %s", $id));
         if (!$doc) {
@@ -41,6 +42,7 @@ class UCPWC_Checkout
     public static function save(array $doc): void
     {
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- plugin-owned table; no core API covers it.
         $wpdb->replace($wpdb->prefix . 'ucpwc_sessions', [
             'id' => $doc['id'], 'doc' => wp_json_encode($doc), 'updated_at' => gmdate('Y-m-d H:i:s'),
         ]);

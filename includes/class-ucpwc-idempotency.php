@@ -10,6 +10,7 @@ class UCPWC_Idempotency
     public static function check(string $key, string $hash): ?array
     {
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- plugin-owned table; no core API covers it.
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT request_hash, response_status, response_body FROM {$wpdb->prefix}ucpwc_idempotency WHERE idem_key = %s",
             $key
@@ -26,6 +27,7 @@ class UCPWC_Idempotency
     public static function store(string $key, string $hash, int $status, array $body): void
     {
         global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- plugin-owned table; no core API covers it.
         $wpdb->replace($wpdb->prefix . 'ucpwc_idempotency', [
             'idem_key'        => $key,
             'request_hash'    => $hash,
