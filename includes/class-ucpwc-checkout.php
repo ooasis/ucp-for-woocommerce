@@ -580,9 +580,10 @@ class UCPWC_Checkout
         $order->update_meta_data('_ucpwc_checkout_id', $doc['id']);
         if ($transaction_id) {
             $order->set_transaction_id($transaction_id);
-            $order->add_order_note('Charged via UCP payment handler, transaction ' . $transaction_id . '.');
+            /* translators: %s: payment processor transaction id */
+            $order->add_order_note(sprintf(__('Charged via UCP payment handler, transaction %s.', 'ucp-acp-agent-for-woocommerce'), $transaction_id));
         }
-        $order->set_status('processing', 'UCP agent checkout completed.');
+        $order->set_status('processing', __('UCP agent checkout completed.', 'ucp-acp-agent-for-woocommerce'));
         $order->save();
         return $order->get_id();
     }
