@@ -97,6 +97,7 @@ class UCPWC_Orders
     public static function replace(string $order_uuid, array $body): array
     {
         self::load($order_uuid); // 404 when unknown
+        $body = UCPWC_Checkout::sanitize_input($body);
         self::validate_entity($body);
         self::store($order_uuid, $body);
         return $body;

@@ -40,6 +40,7 @@ class UCPWC_Checkout
 
     public static function create(array $body, string $ucp_agent): array
     {
+        $body = self::sanitize_input($body);
         $doc = [
             'ucp'      => UCPWC_Profile::response_envelope(),
             'id'       => wp_generate_uuid4(),
@@ -70,6 +71,7 @@ class UCPWC_Checkout
 
     public static function update(string $id, array $body, string $ucp_agent): array
     {
+        $body = self::sanitize_input($body);
         $doc = self::load($id);
         if (in_array($doc['status'], ['completed', 'canceled'], true)) {
             throw new UCPWC_Error(409, 'CHECKOUT_NOT_MODIFIABLE', 'Checkout is ' . $doc['status'] . ' and cannot be modified');
@@ -112,6 +114,7 @@ class UCPWC_Checkout
 
     public static function complete(string $id, array $body): array
     {
+        $body = self::sanitize_input($body);
         $doc = self::load($id);
         if (in_array($doc['status'], ['completed', 'canceled'], true)) {
             throw new UCPWC_Error(409, 'CHECKOUT_NOT_MODIFIABLE', 'Checkout is ' . $doc['status'] . ' and cannot be modified');
@@ -166,6 +169,34 @@ class UCPWC_Checkout
             unset($i['credential']);
             return $i;
         }, array_values($instruments));
+    }
+
+    /**
+     * Sanitize early: every string in agent-supplied JSON is cleaned before it is stored or
+     * copied into a WooCommerce order (URLs via esc_url_raw, everything else via
+     * sanitize_text_field; buyer email via sanitize_email). Payment credentials are opaque
+     * tokens forwarded to the PSP and never persisted, so they are left byte-exact.
+     */
+    public static function sanitize_input(array $data): array
+    {
+        $credentials = [];
+        foreach ($data['payment']['instruments'] ?? [] as $i => $instrument) {
+            $credentials[$i] = $instrument['credential'] ?? null;
+        }
+        array_walk_recursive($data, function (&$value) {
+            if (is_string($value)) {
+                $value = preg_match('#^https?://#i', $value) ? esc_url_raw($value) : sanitize_text_field($value);
+            }
+        });
+        foreach ($credentials as $i => $credential) {
+            if ($credential !== null) {
+                $data['payment']['instruments'][$i]['credential'] = $credential;
+            }
+        }
+        if (isset($data['buyer']['email'])) {
+            $data['buyer']['email'] = sanitize_email($data['buyer']['email']);
+        }
+        return $data;
     }
 
     // -- recalculation pipeline ----------------------------------------------
