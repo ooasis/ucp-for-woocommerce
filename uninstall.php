@@ -7,8 +7,8 @@ defined('WP_UNINSTALL_PLUGIN') || exit;
 wp_clear_scheduled_hook('ucpwc_feed_push');
 
 global $wpdb;
-$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}ucp_sessions");
-$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}ucp_idempotency");
+$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}ucpwc_sessions");
+$wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}ucpwc_idempotency");
 
 // All plugin options share the ucpwc_ prefix (settings, keys, and per-order
 // entities like ucpwc_order_<uuid>); transients use ucpwc_profile_*.

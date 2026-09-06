@@ -11,7 +11,7 @@ class UCPWC_Idempotency
     {
         global $wpdb;
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT request_hash, response_status, response_body FROM {$wpdb->prefix}ucp_idempotency WHERE idem_key = %s",
+            "SELECT request_hash, response_status, response_body FROM {$wpdb->prefix}ucpwc_idempotency WHERE idem_key = %s",
             $key
         ), ARRAY_A);
         if (!$row) {
@@ -26,7 +26,7 @@ class UCPWC_Idempotency
     public static function store(string $key, string $hash, int $status, array $body): void
     {
         global $wpdb;
-        $wpdb->replace($wpdb->prefix . 'ucp_idempotency', [
+        $wpdb->replace($wpdb->prefix . 'ucpwc_idempotency', [
             'idem_key'        => $key,
             'request_hash'    => $hash,
             'response_status' => $status,

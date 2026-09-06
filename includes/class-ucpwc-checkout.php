@@ -21,7 +21,7 @@ class UCPWC_Checkout
     {
         global $wpdb;
         $doc = $wpdb->get_var($wpdb->prepare(
-            "SELECT doc FROM {$wpdb->prefix}ucp_sessions WHERE id = %s", $id));
+            "SELECT doc FROM {$wpdb->prefix}ucpwc_sessions WHERE id = %s", $id));
         if (!$doc) {
             throw new UCPWC_Error(404, 'RESOURCE_NOT_FOUND', 'Checkout session not found');
         }
@@ -31,7 +31,7 @@ class UCPWC_Checkout
     public static function save(array $doc): void
     {
         global $wpdb;
-        $wpdb->replace($wpdb->prefix . 'ucp_sessions', [
+        $wpdb->replace($wpdb->prefix . 'ucpwc_sessions', [
             'id' => $doc['id'], 'doc' => wp_json_encode($doc), 'updated_at' => gmdate('Y-m-d H:i:s'),
         ]);
     }
@@ -535,8 +535,8 @@ class UCPWC_Checkout
                 $order->set_total((string)($t['amount'] / 100));
             }
         }
-        $order->update_meta_data('_ucp_order_id', $order_uuid);
-        $order->update_meta_data('_ucp_checkout_id', $doc['id']);
+        $order->update_meta_data('_ucpwc_order_id', $order_uuid);
+        $order->update_meta_data('_ucpwc_checkout_id', $doc['id']);
         if ($transaction_id) {
             $order->set_transaction_id($transaction_id);
             $order->add_order_note('Charged via UCP payment handler, transaction ' . $transaction_id . '.');

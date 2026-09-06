@@ -34,13 +34,13 @@ register_activation_hook(__FILE__, function () {
     global $wpdb;
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     $charset = $wpdb->get_charset_collate();
-    dbDelta("CREATE TABLE {$wpdb->prefix}ucp_sessions (
+    dbDelta("CREATE TABLE {$wpdb->prefix}ucpwc_sessions (
         id varchar(64) NOT NULL,
         doc longtext NOT NULL,
         updated_at datetime NOT NULL,
         PRIMARY KEY (id)
     ) $charset;");
-    dbDelta("CREATE TABLE {$wpdb->prefix}ucp_idempotency (
+    dbDelta("CREATE TABLE {$wpdb->prefix}ucpwc_idempotency (
         idem_key varchar(191) NOT NULL,
         request_hash char(64) NOT NULL,
         response_status smallint NOT NULL,
