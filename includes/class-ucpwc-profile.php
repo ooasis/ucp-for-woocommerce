@@ -26,9 +26,20 @@ class UCPWC_Profile
         update_option('ucpwc_signing_key', ['pem' => $pem, 'jwk' => $jwk], false);
     }
 
+    /** The stored key pair, generated on demand if activation did not run (e.g. network bulk-activate). */
+    private static function signing_key(): array
+    {
+        $key = get_option('ucpwc_signing_key');
+        if (!is_array($key)) {
+            self::ensure_signing_key();
+            $key = get_option('ucpwc_signing_key');
+        }
+        return $key;
+    }
+
     public static function public_jwk(): array
     {
-        return get_option('ucpwc_signing_key')['jwk'];
+        return self::signing_key()['jwk'];
     }
 
     /** Active key first, then retired keys still inside their rotation grace period. */
@@ -49,7 +60,7 @@ class UCPWC_Profile
 
     public static function private_key(): array
     {
-        $pem = get_option('ucpwc_signing_key')['pem'];
+        $pem = self::signing_key()['pem'];
         return ['kty' => 'EC', 'crv' => 'P-256', 'openssl_key' => openssl_pkey_get_private($pem)];
     }
 
