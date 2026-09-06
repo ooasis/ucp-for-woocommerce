@@ -48,6 +48,17 @@ class UCPWC_Checkout
         ]);
     }
 
+    /** Daily cron: drop checkout sessions untouched for 30 days (abandoned or long finished). */
+    public static function purge_stale(int $max_age_seconds = 30 * DAY_IN_SECONDS): int
+    {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- plugin-owned table; no core API covers it.
+        return (int)$wpdb->query($wpdb->prepare(
+            "DELETE FROM {$wpdb->prefix}ucpwc_sessions WHERE updated_at < %s",
+            gmdate('Y-m-d H:i:s', time() - $max_age_seconds)
+        ));
+    }
+
     // -- endpoints ------------------------------------------------------------
 
     public static function create(array $body, string $ucp_agent): array

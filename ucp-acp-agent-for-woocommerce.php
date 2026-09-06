@@ -49,10 +49,14 @@ register_activation_hook(__FILE__, function () {
         PRIMARY KEY (idem_key)
     ) $charset;");
     UCPWC_Profile::ensure_signing_key();
+    if (!wp_next_scheduled('ucpwc_cleanup')) {
+        wp_schedule_event(time() + DAY_IN_SECONDS, 'daily', 'ucpwc_cleanup');
+    }
 });
 
 register_deactivation_hook(__FILE__, function () {
     wp_clear_scheduled_hook('ucpwc_feed_push');
+    wp_clear_scheduled_hook('ucpwc_cleanup');
 });
 
 add_action('before_woocommerce_init', function () {
@@ -66,6 +70,10 @@ add_action('rest_api_init', ['UCPWC_Acp', 'register_routes']);
 add_action('rest_api_init', ['UCPWC_Feed', 'register_routes']);
 add_action('admin_menu', ['UCPWC_Admin', 'register'], 60);
 add_action('ucpwc_feed_push', ['UCPWC_Feed', 'push']);
+add_action('ucpwc_cleanup', function () {
+    UCPWC_Idempotency::purge();
+    UCPWC_Checkout::purge_stale();
+});
 
 // /.well-known/ucp and /testing/simulate-shipping/{id} live at the site root,
 // outside the REST prefix — serve them straight off REQUEST_URI.

@@ -7,6 +7,7 @@ defined('WP_UNINSTALL_PLUGIN') || exit;
 // phpcs:disable WordPress.DB.DirectDatabaseQuery -- uninstall drops plugin-owned tables and options; no core API covers it.
 
 wp_clear_scheduled_hook('ucpwc_feed_push');
+wp_clear_scheduled_hook('ucpwc_cleanup');
 
 global $wpdb;
 $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}ucpwc_sessions");

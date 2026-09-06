@@ -35,7 +35,17 @@ class UCPWC_Idempotency
             'response_body'   => wp_json_encode($body),
             'created_at'      => gmdate('Y-m-d H:i:s'),
         ]);
-        // ponytail: no purge job — add a daily cron deleting rows older than 48h when the table grows.
+    }
+
+    /** Daily cron: idempotency keys only need to survive client retries. */
+    public static function purge(int $max_age_seconds = 2 * DAY_IN_SECONDS): int
+    {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- plugin-owned table; no core API covers it.
+        return (int)$wpdb->query($wpdb->prepare(
+            "DELETE FROM {$wpdb->prefix}ucpwc_idempotency WHERE created_at < %s",
+            gmdate('Y-m-d H:i:s', time() - $max_age_seconds)
+        ));
     }
 
     public static function hash(string $operation, ?string $resource_id, string $raw_body): string
