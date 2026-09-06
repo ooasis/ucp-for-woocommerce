@@ -15,7 +15,10 @@ class UCPWC_Admin
 
     private static function handle_actions(): ?string
     {
-        if ((sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'] ?? ''))) !== 'POST' || !check_admin_referer('ucpwc_settings')) {
+        if ((sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'] ?? ''))) !== 'POST') {
+            return null;
+        }
+        if (!current_user_can('manage_woocommerce') || !check_admin_referer('ucpwc_settings')) {
             return null;
         }
         $action = sanitize_key($_POST['ucpwc_action'] ?? 'save');
