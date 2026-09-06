@@ -3,6 +3,23 @@ defined('ABSPATH') || exit;
 
 class UCPWC_Admin
 {
+    const SECRET_OPTIONS = ['ucpwc_acp_webhook_secret', 'ucpwc_stripe_secret_key', 'ucpwc_feed_api_token'];
+
+    /** Password input that never echoes the saved secret, plus a "clear" checkbox when one is saved. */
+    private static function secret_input(string $opt, string $placeholder = '', string $style = ''): void
+    {
+        $saved = get_option($opt, '') !== '';
+        printf(
+            '<input type="password" class="regular-text" id="%1$s" name="%1$s" value="" placeholder="%2$s" autocomplete="new-password"%3$s>',
+            esc_attr($opt),
+            esc_attr($saved ? __('saved — leave blank to keep', 'ucp-acp-agent-for-woocommerce') : $placeholder),
+            $style !== '' ? ' style="' . esc_attr($style) . '"' : ''
+        );
+        if ($saved) {
+            printf(' <label><input type="checkbox" name="%s_clear"> %s</label>', esc_attr($opt), esc_html__('clear', 'ucp-acp-agent-for-woocommerce'));
+        }
+    }
+
     public static function register(): void
     {
         add_submenu_page(
@@ -34,14 +51,25 @@ class UCPWC_Admin
                 return UCPWC_Feed::push();
             default:
                 update_option('ucpwc_strict_signatures', isset($_POST['strict_signatures']) ? 'yes' : 'no');
-                if (isset($_POST['ucpwc_stripe_secret_key'])) {
-                    delete_option('ucpwc_stripe_account_id'); // re-derive from the (possibly new) key
-                }
-                foreach (['ucpwc_simulation_secret', 'ucpwc_acp_webhook_url', 'ucpwc_acp_webhook_secret',
-                          'ucpwc_stripe_secret_key', 'ucpwc_stripe_publishable_key',
-                          'ucpwc_feed_api_base', 'ucpwc_feed_id', 'ucpwc_feed_api_token'] as $opt) {
+                foreach (['ucpwc_simulation_secret', 'ucpwc_acp_webhook_url', 'ucpwc_stripe_publishable_key',
+                          'ucpwc_feed_api_base', 'ucpwc_feed_id'] as $opt) {
                     $value = trim(sanitize_text_field(wp_unslash($_POST[$opt] ?? '')));
                     $value === '' ? delete_option($opt) : update_option($opt, $value, false);
+                }
+                // Secrets are never echoed back into the form: blank keeps the saved value,
+                // the "clear" checkbox removes it, a non-blank value replaces it.
+                foreach (self::SECRET_OPTIONS as $opt) {
+                    $value = trim(sanitize_text_field(wp_unslash($_POST[$opt] ?? '')));
+                    if (!empty($_POST[$opt . '_clear'])) {
+                        delete_option($opt);
+                    } elseif ($value !== '') {
+                        update_option($opt, $value, false);
+                    } else {
+                        continue;
+                    }
+                    if ($opt === 'ucpwc_stripe_secret_key') {
+                        delete_option('ucpwc_stripe_account_id'); // re-derive from the new key
+                    }
                 }
                 UCPWC_Feed::maybe_schedule();
                 return __('Settings saved.', 'ucp-acp-agent-for-woocommerce');
@@ -115,7 +143,7 @@ class UCPWC_Admin
             </tr>
             <tr>
                 <th><label for="ucpwc_acp_webhook_secret"><?php esc_html_e('Webhook signing secret', 'ucp-acp-agent-for-woocommerce'); ?></label></th>
-                <td><input type="text" class="regular-text" id="ucpwc_acp_webhook_secret" name="ucpwc_acp_webhook_secret" value="<?php echo esc_attr($field('ucpwc_acp_webhook_secret')); ?>" autocomplete="off">
+                <td><?php self::secret_input('ucpwc_acp_webhook_secret'); ?>
                     <p class="description"><?php esc_html_e('Shared secret for the HMAC-SHA256 Merchant-Signature header.', 'ucp-acp-agent-for-woocommerce'); ?></p></td>
             </tr>
         </table>
@@ -137,7 +165,7 @@ class UCPWC_Admin
             </tr>
             <tr>
                 <th><label for="ucpwc_stripe_secret_key"><?php esc_html_e('Stripe secret key', 'ucp-acp-agent-for-woocommerce'); ?></label></th>
-                <td><input type="password" class="regular-text" id="ucpwc_stripe_secret_key" name="ucpwc_stripe_secret_key" value="<?php echo esc_attr($field('ucpwc_stripe_secret_key')); ?>" autocomplete="off">
+                <td><?php self::secret_input('ucpwc_stripe_secret_key'); ?>
                     <p class="description"><?php esc_html_e('Enables Google Pay (UCP) and Shared Payment Token (ACP) handlers.', 'ucp-acp-agent-for-woocommerce'); ?>
                     <?php if (!get_option('ucpwc_stripe_secret_key') && UCPWC_Payments::stripe_secret_key()) : ?>
                         <?php esc_html_e('Currently inherited from the WooCommerce Stripe gateway settings.', 'ucp-acp-agent-for-woocommerce'); ?>
@@ -165,7 +193,7 @@ class UCPWC_Admin
                 <td>
                     <input type="url" class="regular-text" id="ucpwc_feed_api_base" name="ucpwc_feed_api_base" value="<?php echo esc_attr($field('ucpwc_feed_api_base')); ?>" placeholder="https://agent.example/feed-api">
                     <input type="text" class="regular-text" name="ucpwc_feed_id" value="<?php echo esc_attr($field('ucpwc_feed_id')); ?>" placeholder="feed id" style="max-width:150px">
-                    <input type="password" class="regular-text" name="ucpwc_feed_api_token" value="<?php echo esc_attr($field('ucpwc_feed_api_token')); ?>" placeholder="bearer token" autocomplete="off" style="max-width:200px">
+                    <?php self::secret_input('ucpwc_feed_api_token', 'bearer token', 'max-width:200px'); ?>
                     <p class="description">
                         <?php esc_html_e('Provisioned by the agent platform. When configured, the catalog is pushed daily and on demand.', 'ucp-acp-agent-for-woocommerce'); ?>
                         <?php if ($last = get_option('ucpwc_feed_last_push')) : ?>
