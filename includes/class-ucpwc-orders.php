@@ -5,6 +5,9 @@ defined('ABSPATH') || exit;
 
 class UCPWC_Orders
 {
+    /** Upper bound for a PUT /orders/{id} entity; real orders are a few KB. */
+    const MAX_ENTITY_BYTES = 262144;
+
     // -- entity ----------------------------------------------------------------
 
     /** Build the UCP order entity from a completed checkout doc. */
@@ -97,6 +100,9 @@ class UCPWC_Orders
     public static function replace(string $order_uuid, array $body): array
     {
         self::load($order_uuid); // 404 when unknown
+        if (strlen(wp_json_encode($body)) > self::MAX_ENTITY_BYTES) {
+            throw new UCPWC_Error(413, 'INVALID_REQUEST', 'Order entity exceeds ' . self::MAX_ENTITY_BYTES . ' bytes');
+        }
         $body = UCPWC_Checkout::sanitize_input($body);
         self::validate_entity($body);
         self::store($order_uuid, $body);
