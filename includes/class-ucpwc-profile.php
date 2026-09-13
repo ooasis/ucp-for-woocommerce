@@ -21,7 +21,7 @@ class UCPWC_Profile
         // Some PHP builds warn or fail here (WordPress Studio's php-wasm cannot
         // generate EC keys at all; XAMPP lacks a default openssl.cnf); activation
         // must emit no output and failure is handled below, so silence the block.
-        set_error_handler('__return_true');
+        set_error_handler('__return_true'); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- not debug code: silences openssl warnings on PHP builds where EC keygen fails (failure handled below); restored in finally.
         try {
             $key = openssl_pkey_new($args);
             if (!$key) {
