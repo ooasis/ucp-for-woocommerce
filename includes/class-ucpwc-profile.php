@@ -18,14 +18,22 @@ class UCPWC_Profile
             return;
         }
         $args = ['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC];
-        $key = openssl_pkey_new($args);
-        if (!$key) {
-            // Some bundled PHPs (WordPress Studio, XAMPP) ship without a reachable
-            // default openssl.cnf, making openssl_pkey_new() fail; retry with ours.
-            $args['config'] = __DIR__ . '/openssl.cnf';
+        // Some PHP builds emit warnings when the default openssl.cnf is unreachable
+        // (WordPress Studio, XAMPP); activation must produce no output and failure is
+        // handled explicitly below, so silence PHP errors for the generation block.
+        set_error_handler('__return_true');
+        try {
             $key = openssl_pkey_new($args);
+            if (!$key) {
+                // No reachable default openssl.cnf; retry with the bundled one.
+                $args['config'] = __DIR__ . '/openssl.cnf';
+                $key = openssl_pkey_new($args);
+            }
+            $exported = $key && openssl_pkey_export($key, $pem, null, $args);
+        } finally {
+            restore_error_handler();
         }
-        if (!$key || !openssl_pkey_export($key, $pem, null, $args)) {
+        if (!$exported) {
             return; // never fatal on activation; signing_key() retries on first use
         }
         $jwk = \UCPWC\Signatures\ec_pem_to_jwk($key, '');
