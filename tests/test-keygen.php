@@ -28,4 +28,15 @@ $priv = ['kty' => 'EC', 'crv' => 'P-256', 'openssl_key' => openssl_pkey_get_priv
 $sig = \UCPWC\Signatures\sign_base('test-base', $priv);
 assert(\UCPWC\Signatures\verify_base('test-base', $sig, $jwk) || print("FAIL  sign/verify round-trip\n"));
 
-echo "PASS  keygen fallback (default config " . ($broken ? "worked" : "broken, as in Studio") . ")\n";
+echo "PASS  EC keygen fallback (default config " . ($broken ? "worked" : "broken, as in Studio") . ")\n";
+
+// Ed25519 fallback (PHPs that cannot generate EC keys at all, e.g. Studio's php-wasm).
+$kp = sodium_crypto_sign_keypair();
+$okp = ['kid' => 'k2', 'kty' => 'OKP', 'crv' => 'Ed25519',
+        'x' => \UCPWC\Signatures\b64url_encode(sodium_crypto_sign_publickey($kp))];
+assert(\UCPWC\Signatures\key_usable_for_verify($okp) || print("FAIL  OKP jwk not usable\n"));
+$priv = ['kty' => 'OKP', 'crv' => 'Ed25519', 'ed25519_secret' => sodium_crypto_sign_secretkey($kp)];
+$sig = \UCPWC\Signatures\sign_base('test-base', $priv);
+assert(\UCPWC\Signatures\verify_base('test-base', $sig, $okp) || print("FAIL  Ed25519 sign/verify round-trip\n"));
+
+echo "PASS  Ed25519 fallback\n";

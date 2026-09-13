@@ -18,9 +18,9 @@ class UCPWC_Profile
             return;
         }
         $args = ['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC];
-        // Some PHP builds emit warnings when the default openssl.cnf is unreachable
-        // (WordPress Studio, XAMPP); activation must produce no output and failure is
-        // handled explicitly below, so silence PHP errors for the generation block.
+        // Some PHP builds warn or fail here (WordPress Studio's php-wasm cannot
+        // generate EC keys at all; XAMPP lacks a default openssl.cnf); activation
+        // must emit no output and failure is handled below, so silence the block.
         set_error_handler('__return_true');
         try {
             $key = openssl_pkey_new($args);
@@ -33,14 +33,24 @@ class UCPWC_Profile
         } finally {
             restore_error_handler();
         }
-        if (!$exported) {
-            return; // never fatal on activation; signing_key() retries on first use
+        if ($exported) {
+            $jwk = \UCPWC\Signatures\ec_pem_to_jwk($key, '');
+            $thumb = ['crv' => $jwk['crv'], 'kty' => $jwk['kty'], 'x' => $jwk['x'], 'y' => $jwk['y']];
+            $stored = ['pem' => $pem];
+        } else {
+            // This PHP cannot generate EC keys: fall back to Ed25519 (EdDSA, also in
+            // the UCP algorithm set). WordPress guarantees the sodium_crypto_sign_*
+            // functions via the bundled sodium_compat polyfill.
+            $kp = sodium_crypto_sign_keypair();
+            $jwk = ['kid' => '', 'kty' => 'OKP', 'crv' => 'Ed25519',
+                    'x' => \UCPWC\Signatures\b64url_encode(sodium_crypto_sign_publickey($kp))];
+            $thumb = ['crv' => $jwk['crv'], 'kty' => $jwk['kty'], 'x' => $jwk['x']];
+            $stored = ['ed25519_secret' => base64_encode(sodium_crypto_sign_secretkey($kp))];
         }
-        $jwk = \UCPWC\Signatures\ec_pem_to_jwk($key, '');
-        // kid = RFC 7638 thumbprint (lexicographic members crv,kty,x,y)
-        $thumb = ['crv' => $jwk['crv'], 'kty' => $jwk['kty'], 'x' => $jwk['x'], 'y' => $jwk['y']];
+        // kid = RFC 7638 thumbprint (lexicographic members)
         $jwk['kid'] = \UCPWC\Signatures\b64url_encode(hash('sha256', wp_json_encode($thumb, JSON_UNESCAPED_SLASHES), true));
-        update_option('ucpwc_signing_key', ['pem' => $pem, 'jwk' => $jwk], false);
+        $stored['jwk'] = $jwk;
+        update_option('ucpwc_signing_key', $stored, false);
     }
 
     /** The stored key pair, generated on demand if activation did not run (e.g. network bulk-activate). */
@@ -80,8 +90,11 @@ class UCPWC_Profile
 
     public static function private_key(): array
     {
-        $pem = self::signing_key()['pem'];
-        return ['kty' => 'EC', 'crv' => 'P-256', 'openssl_key' => openssl_pkey_get_private($pem)];
+        $key = self::signing_key();
+        if (isset($key['ed25519_secret'])) {
+            return ['kty' => 'OKP', 'crv' => 'Ed25519', 'ed25519_secret' => base64_decode($key['ed25519_secret'])];
+        }
+        return ['kty' => 'EC', 'crv' => 'P-256', 'openssl_key' => openssl_pkey_get_private($key['pem'])];
     }
 
     public static function endpoint(): string

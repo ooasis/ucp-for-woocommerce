@@ -106,7 +106,7 @@ class UCPWC_Admin
         <h2><?php esc_html_e('UCP (Google / Gemini and other UCP platforms)', 'ucp-acp-agent-for-woocommerce'); ?></h2>
         <table class="form-table" style="max-width:900px">
             <tr>
-                <th><?php esc_html_e('Signing key (ES256)', 'ucp-acp-agent-for-woocommerce'); ?></th>
+                <th><?php echo esc_html($jwk['crv'] === 'Ed25519' ? __('Signing key (EdDSA)', 'ucp-acp-agent-for-woocommerce') : __('Signing key (ES256)', 'ucp-acp-agent-for-woocommerce')); ?></th>
                 <td>
                     <code>kid: <?php echo esc_html($jwk['kid']); ?></code>
                     <?php if ($retired) : ?>
