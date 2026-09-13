@@ -17,8 +17,17 @@ class UCPWC_Profile
         if (get_option('ucpwc_signing_key')) {
             return;
         }
-        $key = openssl_pkey_new(['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC]);
-        openssl_pkey_export($key, $pem);
+        $args = ['curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC];
+        $key = openssl_pkey_new($args);
+        if (!$key) {
+            // Some bundled PHPs (WordPress Studio, XAMPP) ship without a reachable
+            // default openssl.cnf, making openssl_pkey_new() fail; retry with ours.
+            $args['config'] = __DIR__ . '/openssl.cnf';
+            $key = openssl_pkey_new($args);
+        }
+        if (!$key || !openssl_pkey_export($key, $pem, null, $args)) {
+            return; // never fatal on activation; signing_key() retries on first use
+        }
         $jwk = \UCPWC\Signatures\ec_pem_to_jwk($key, '');
         // kid = RFC 7638 thumbprint (lexicographic members crv,kty,x,y)
         $thumb = ['crv' => $jwk['crv'], 'kty' => $jwk['kty'], 'x' => $jwk['x'], 'y' => $jwk['y']];
@@ -33,6 +42,9 @@ class UCPWC_Profile
         if (!is_array($key)) {
             self::ensure_signing_key();
             $key = get_option('ucpwc_signing_key');
+        }
+        if (!is_array($key)) {
+            throw new \RuntimeException('ucpwc: EC key generation failed — check the OpenSSL PHP extension');
         }
         return $key;
     }

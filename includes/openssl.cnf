@@ -1,0 +1,8 @@
+# Minimal OpenSSL config used as a fallback when PHP's OpenSSL has no
+# reachable default openssl.cnf (WordPress Studio, some XAMPP builds).
+HOME = .
+
+[ req ]
+distinguished_name = req_distinguished_name
+
+[ req_distinguished_name ]
